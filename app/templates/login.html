@@ -471,7 +471,7 @@
             const signedMessage = await window.solana.signMessage(encodedMessage, 'utf8');
 
             // Converti la firma in base58
-            const signature = bs58.encode(signedMessage.signature);
+            const signature = bs58.encode(Array.from(signedMessage.signature));
 
             showStatus('loading', 'Verifica firma sul server...');
 
@@ -523,7 +523,35 @@
 </script>
 
 <!-- bs58 per encoding della firma -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/bs58/5.0.0/bs58.min.js"></script>
+<script>
+const bs58 = (() => {
+  const ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+  const BASE = ALPHABET.length;
+  const LEADER = ALPHABET[0];
+  const d = [];
+  for(let i=0;i<256;i++) d[i]=0;
+  for(let i=0;i<ALPHABET.length;i++) d[ALPHABET.charCodeAt(i)]=i;
+  return {
+    encode(source) {
+      if(source.length===0) return '';
+      const digits=[0];
+      for(let i=0;i<source.length;i++){
+        let carry=source[i];
+        for(let j=0;j<digits.length;j++){
+          carry+=digits[j]<<8;
+          digits[j]=carry%BASE;
+          carry=(carry/BASE)|0;
+        }
+        while(carry>0){digits.push(carry%BASE);carry=(carry/BASE)|0;}
+      }
+      let str='';
+      for(let i=0;source[i]===0&&i<source.length-1;i++) str+=LEADER;
+      for(let i=digits.length-1;i>=0;i--) str+=ALPHABET[digits[i]];
+      return str;
+    }
+  };
+})();
+</script>
 
 </body>
 </html>
