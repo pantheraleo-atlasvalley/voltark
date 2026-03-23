@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atlas Valley Portal — Login</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --green: #00ff88;
+            --blue: #0066ff;
+            --orange: #ff6b35;
+            --bg: #080808;
+            --surface: rgba(255,255,255,0.04);
+            --border: rgba(0,255,136,0.2);
+            --text: #f0f0f0;
+            --muted: #888;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Exo 2', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        /* Animated grid background */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(0,255,136,0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,255,136,0.04) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: gridMove 20s linear infinite;
+            z-index: 0;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse at 20% 50%, rgba(0,255,136,0.12) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 30%, rgba(0,102,255,0.10) 0%, transparent 60%);
+            z-index: 0;
+        }
+
+        @keyframes gridMove {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(50px); }
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 460px;
+            padding: 2rem;
+        }
+
+        /* Logo */
+        .logo {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .logo-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 2rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--green), var(--blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 4px;
+            display: block;
+        }
+
+        .logo-sub {
+            font-size: 0.75rem;
+            color: var(--muted);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-top: 0.4rem;
+        }
+
+        /* Card */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 2.5rem;
+            backdrop-filter: blur(20px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--green), transparent);
+        }
+
+        .card-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--green);
+            margin-bottom: 0.5rem;
+            letter-spacing: 1px;
+        }
+
+        .card-desc {
+            font-size: 0.9rem;
+            color: var(--muted);
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        /* Steps */
+        .steps {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .step {
+            flex: 1;
+            height: 3px;
+            border-radius: 2px;
+            background: rgba(255,255,255,0.1);
+            transition: background 0.4s ease;
+        }
+
+        .step.active { background: var(--green); }
+        .step.done { background: rgba(0,255,136,0.4); }
+
+        /* Wallet button */
+        .btn-wallet {
+            width: 100%;
+            padding: 1rem 1.5rem;
+            background: linear-gradient(135deg, var(--green), var(--blue));
+            color: #000;
+            font-family: 'Exo 2', sans-serif;
+            font-weight: 700;
+            font-size: 1rem;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            transition: all 0.3s ease;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-wallet:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,255,136,0.35);
+        }
+
+        .btn-wallet:active { transform: translateY(0); }
+
+        .btn-wallet:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-wallet svg {
+            width: 20px; height: 20px;
+            flex-shrink: 0;
+        }
+
+        /* Status messages */
+        .status {
+            margin-top: 1.25rem;
+            padding: 0.9rem 1.1rem;
+            border-radius: 10px;
+            font-size: 0.875rem;
+            display: none;
+            align-items: flex-start;
+            gap: 0.6rem;
+            line-height: 1.5;
+        }
+
+        .status.show { display: flex; }
+
+        .status.info {
+            background: rgba(0,102,255,0.12);
+            border: 1px solid rgba(0,102,255,0.3);
+            color: #88aaff;
+        }
+
+        .status.success {
+            background: rgba(0,255,136,0.1);
+            border: 1px solid rgba(0,255,136,0.3);
+            color: var(--green);
+        }
+
+        .status.error {
+            background: rgba(255,60,60,0.1);
+            border: 1px solid rgba(255,60,60,0.3);
+            color: #ff8080;
+        }
+
+        .status.loading {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: var(--muted);
+        }
+
+        .spinner {
+            width: 16px; height: 16px;
+            border: 2px solid rgba(255,255,255,0.2);
+            border-top-color: var(--green);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Wallet address display */
+        .wallet-badge {
+            display: none;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.85rem 1rem;
+            background: rgba(0,255,136,0.07);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+        }
+
+        .wallet-badge.show { display: flex; }
+
+        .wallet-dot {
+            width: 8px; height: 8px;
+            background: var(--green);
+            border-radius: 50%;
+            flex-shrink: 0;
+            box-shadow: 0 0 8px var(--green);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        .wallet-addr {
+            font-family: 'Orbitron', monospace;
+            font-size: 0.75rem;
+            color: var(--green);
+            letter-spacing: 0.5px;
+            word-break: break-all;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            margin-top: 1.5rem;
+            font-size: 0.78rem;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+        .footer a {
+            color: var(--green);
+            text-decoration: none;
+        }
+
+        .footer a:hover { text-decoration: underline; }
+
+        /* Requirement badge */
+        .req-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: rgba(255,107,53,0.1);
+            border: 1px solid rgba(255,107,53,0.3);
+            color: var(--orange);
+            padding: 0.3rem 0.7rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="logo">
+        <span class="logo-title">ATLAS VALLEY</span>
+        <span class="logo-sub">Community Portal</span>
+    </div>
+
+    <div class="card">
+        <div class="card-title">⚡ Accesso con Wallet</div>
+        <p class="card-desc">
+            Connetti il tuo wallet Phantom e firma un messaggio per autenticarti.
+            Nessuna transazione, nessun gas.
+        </p>
+
+        <div class="req-badge">
+            ◈ Richiesti: 1+ $ARKV
+        </div>
+
+        <!-- Progress steps -->
+        <div class="steps">
+            <div class="step active" id="step1"></div>
+            <div class="step" id="step2"></div>
+            <div class="step" id="step3"></div>
+        </div>
+
+        <!-- Wallet badge (shown after connect) -->
+        <div class="wallet-badge" id="walletBadge">
+            <span class="wallet-dot"></span>
+            <span class="wallet-addr" id="walletAddr"></span>
+        </div>
+
+        <!-- Main CTA button -->
+        <button class="btn-wallet" id="mainBtn" onclick="handleLogin()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="7" width="20" height="14" rx="2"/>
+                <path d="M16 3H8L2 7h20l-6-4z"/>
+                <circle cx="16" cy="14" r="1.5" fill="currentColor"/>
+            </svg>
+            Connetti Phantom
+        </button>
+
+        <!-- Status messages -->
+        <div class="status" id="statusMsg"></div>
+    </div>
+
+    <div class="footer">
+        Non hai $ARKV? <a href="https://pump.fun/coin/ABC64226vR9kHtjtYCDENostEbCFdtXYvY4o6Gwzpump" target="_blank">Acquistali qui</a>
+        &nbsp;·&nbsp;
+        <a href="https://solscan.io/token/ABC64226vR9kHtjtYCDENostEbCFdtXYvY4o6Gwzpump" target="_blank">Verifica su Solscan</a>
+    </div>
+</div>
+
+<script>
+    // Stato locale
+    let connectedWallet = null;
+    let currentNonce = null;
+    let currentMessage = null;
+    let loginStep = 1; // 1=connect, 2=sign, 3=done
+
+    const mainBtn = document.getElementById('mainBtn');
+    const statusMsg = document.getElementById('statusMsg');
+    const walletBadge = document.getElementById('walletBadge');
+    const walletAddrEl = document.getElementById('walletAddr');
+
+    function setStep(n) {
+        loginStep = n;
+        for (let i = 1; i <= 3; i++) {
+            const el = document.getElementById(`step${i}`);
+            if (i < n) el.className = 'step done';
+            else if (i === n) el.className = 'step active';
+            else el.className = 'step';
+        }
+    }
+
+    function showStatus(type, message) {
+        statusMsg.className = `status show ${type}`;
+        if (type === 'loading') {
+            statusMsg.innerHTML = `<div class="spinner"></div><span>${message}</span>`;
+        } else {
+            const icons = { info: 'ℹ️', success: '✅', error: '❌' };
+            statusMsg.innerHTML = `<span>${icons[type] || ''}</span><span>${message}</span>`;
+        }
+    }
+
+    function hideStatus() {
+        statusMsg.className = 'status';
+    }
+
+    function shortAddr(addr) {
+        return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+    }
+
+    async function handleLogin() {
+        if (loginStep === 1) await connectWallet();
+        else if (loginStep === 2) await signAndVerify();
+    }
+
+    async function connectWallet() {
+        // Controlla se Phantom è installato
+        if (!window.solana || !window.solana.isPhantom) {
+            showStatus('error', 'Phantom non trovato. <a href="https://phantom.app" target="_blank">Installalo qui</a>.');
+            return;
+        }
+
+        mainBtn.disabled = true;
+        showStatus('loading', 'Connessione a Phantom...');
+
+        try {
+            const resp = await window.solana.connect();
+            connectedWallet = resp.publicKey.toString();
+
+            // Mostra wallet badge
+            walletAddrEl.textContent = shortAddr(connectedWallet);
+            walletBadge.classList.add('show');
+
+            // Richiedi nonce al backend
+            showStatus('loading', 'Generazione nonce di sicurezza...');
+
+            const nonceResp = await fetch('/api/auth/nonce', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ wallet_address: connectedWallet }),
+            });
+
+            if (!nonceResp.ok) {
+                const err = await nonceResp.json();
+                throw new Error(err.detail || 'Errore nella richiesta del nonce');
+            }
+
+            const data = await nonceResp.json();
+            currentNonce = data.nonce;
+            currentMessage = data.message;
+
+            setStep(2);
+            mainBtn.disabled = false;
+            mainBtn.innerHTML = `
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+                Firma il Messaggio
+            `;
+            showStatus('info', 'Wallet connesso. Ora firma il messaggio per autenticarti.');
+
+        } catch (err) {
+            mainBtn.disabled = false;
+            if (err.code === 4001) {
+                showStatus('error', 'Connessione rifiutata dall\'utente.');
+            } else {
+                showStatus('error', err.message || 'Errore sconosciuto');
+            }
+        }
+    }
+
+    async function signAndVerify() {
+        if (!connectedWallet || !currentNonce || !currentMessage) {
+            showStatus('error', 'Dati mancanti. Ricarica la pagina.');
+            return;
+        }
+
+        mainBtn.disabled = true;
+        showStatus('loading', 'Firma del messaggio in corso...');
+
+        try {
+            // Codifica il messaggio come Uint8Array
+            const encodedMessage = new TextEncoder().encode(currentMessage);
+            const signedMessage = await window.solana.signMessage(encodedMessage, 'utf8');
+
+            // Converti la firma in base58
+            const signature = bs58.encode(signedMessage.signature);
+
+            showStatus('loading', 'Verifica firma sul server...');
+
+            const verifyResp = await fetch('/api/auth/verify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    wallet_address: connectedWallet,
+                    signature: signature,
+                    nonce: currentNonce,
+                }),
+            });
+
+            const result = await verifyResp.json();
+
+            if (!verifyResp.ok) {
+                throw new Error(result.detail || 'Verifica fallita');
+            }
+
+            setStep(3);
+            showStatus('success', `Accesso effettuato! Balance: ${result.arkv_balance} $ARKV`);
+            mainBtn.innerHTML = '✅ Accesso completato...';
+
+            // Redirect al portal dopo 1s
+            setTimeout(() => { window.location.href = '/portal'; }, 1200);
+
+        } catch (err) {
+            mainBtn.disabled = false;
+            if (err.code === 4001) {
+                showStatus('error', 'Firma rifiutata. Riprova.');
+            } else {
+                showStatus('error', err.message || 'Errore durante la verifica');
+            }
+        }
+    }
+
+    // Controlla se già connesso a Phantom
+    window.addEventListener('load', async () => {
+        if (window.solana?.isPhantom) {
+            try {
+                const resp = await window.solana.connect({ onlyIfTrusted: true });
+                if (resp?.publicKey) {
+                    // Già connesso in precedenza, pre-popola
+                    connectedWallet = resp.publicKey.toString();
+                }
+            } catch (_) { /* non connesso, ok */ }
+        }
+    });
+</script>
+
+<!-- bs58 per encoding della firma -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bs58/5.0.0/bs58.min.js"></script>
+
+</body>
+</html>

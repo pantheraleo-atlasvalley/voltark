@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atlas Valley Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root { --green:#00ff88;--blue:#0066ff;--orange:#ff6b35;--bg:#080808;--surface:rgba(255,255,255,0.04);--border:rgba(0,255,136,0.15);--text:#f0f0f0;--muted:#666; }
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{background:var(--bg);color:var(--text);font-family:'Exo 2',sans-serif;min-height:100vh;}
+        .topbar{position:sticky;top:0;background:rgba(8,8,8,0.95);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 2rem;height:60px;display:flex;align-items:center;justify-content:space-between;z-index:100;}
+        .topbar-logo{font-family:'Orbitron',monospace;font-weight:900;font-size:1.1rem;background:linear-gradient(135deg,var(--green),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:3px;}
+        .topbar-right{display:flex;align-items:center;gap:1.5rem;}
+        .balance-pill{background:rgba(0,255,136,0.1);border:1px solid rgba(0,255,136,0.25);padding:.35rem .9rem;border-radius:20px;font-size:.8rem;font-weight:600;color:var(--green);}
+        .wallet-pill{font-family:'Orbitron',monospace;font-size:.7rem;color:var(--muted);}
+        .logout-btn{background:rgba(255,60,60,0.1);border:1px solid rgba(255,60,60,0.25);color:#ff6060;padding:.35rem .9rem;border-radius:8px;font-size:.8rem;cursor:pointer;}
+        .layout{display:grid;grid-template-columns:220px 1fr;min-height:calc(100vh - 60px);}
+        .sidebar{border-right:1px solid var(--border);padding:1.5rem 1rem;}
+        .nav-item{display:flex;align-items:center;gap:.75rem;padding:.7rem 1rem;border-radius:10px;cursor:pointer;color:var(--muted);font-size:.9rem;font-weight:600;transition:all .2s;margin-bottom:.25rem;}
+        .nav-item:hover,.nav-item.active{background:rgba(0,255,136,0.08);color:var(--green);}
+        .nav-item .icon{font-size:1rem;width:20px;text-align:center;}
+        .main{padding:2rem;max-width:900px;}
+        .page{display:none;} .page.active{display:block;}
+        .page-title{font-family:'Orbitron',monospace;font-size:1.3rem;font-weight:700;color:var(--green);margin-bottom:.5rem;letter-spacing:1px;}
+        .page-sub{color:var(--muted);font-size:.875rem;margin-bottom:2rem;}
+        .card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:1.5rem;margin-bottom:1rem;}
+        .card:hover{border-color:rgba(0,255,136,0.3);}
+        .card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.75rem;}
+        .card-title{font-weight:700;font-size:1rem;}
+        .card-body{font-size:.875rem;color:#aaa;line-height:1.6;}
+        .badge-pinned{background:rgba(255,107,53,.15);border:1px solid rgba(255,107,53,.3);color:var(--orange);padding:.2rem .6rem;border-radius:6px;font-size:.7rem;font-weight:700;}
+        .vote-row{display:flex;gap:.75rem;margin-top:1rem;}
+        .vote-btn{flex:1;padding:.6rem;border-radius:8px;border:none;font-weight:700;font-size:.85rem;cursor:pointer;transition:all .2s;}
+        .vote-yes{background:rgba(0,255,136,.12);border:1px solid rgba(0,255,136,.3);color:var(--green);}
+        .vote-yes:hover{background:rgba(0,255,136,.25);}
+        .vote-no{background:rgba(255,60,60,.1);border:1px solid rgba(255,60,60,.25);color:#ff6060;}
+        .vote-no:hover{background:rgba(255,60,60,.2);}
+        .vote-btn:disabled{opacity:.5;cursor:default;}
+        .progress-wrap{background:rgba(255,255,255,0.05);border-radius:4px;height:6px;margin-top:.75rem;overflow:hidden;}
+        .progress-bar{height:100%;background:linear-gradient(90deg,var(--green),var(--blue));border-radius:4px;transition:width .5s;}
+        .progress-labels{display:flex;justify-content:space-between;font-size:.75rem;color:var(--muted);margin-top:.4rem;}
+        .lb-row{display:flex;align-items:center;gap:1rem;padding:.85rem 1rem;border-radius:10px;margin-bottom:.5rem;background:var(--surface);border:1px solid var(--border);}
+        .lb-rank{font-family:'Orbitron',monospace;font-size:.85rem;font-weight:700;width:30px;text-align:center;}
+        .lb-rank.gold{color:#ffd700;} .lb-rank.silver{color:#c0c0c0;} .lb-rank.bronze{color:#cd7f32;}
+        .lb-addr{font-family:'Orbitron',monospace;font-size:.75rem;color:#aaa;flex:1;}
+        .lb-bal{font-weight:700;font-size:.85rem;color:var(--green);}
+        .chat-wrap{display:flex;flex-direction:column;height:500px;background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;}
+        .chat-messages{flex:1;overflow-y:auto;padding:1.25rem;display:flex;flex-direction:column;gap:.75rem;}
+        .msg{display:flex;gap:.75rem;align-items:flex-start;}
+        .msg-avatar{width:32px;height:32px;background:linear-gradient(135deg,var(--green),var(--blue));border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;color:#000;}
+        .msg-author{font-size:.75rem;font-weight:700;color:var(--green);margin-bottom:.2rem;font-family:'Orbitron',monospace;}
+        .msg-text{font-size:.875rem;color:#ccc;line-height:1.5;}
+        .msg-time{font-size:.7rem;color:var(--muted);margin-left:.5rem;}
+        .chat-input-row{padding:1rem;border-top:1px solid var(--border);display:flex;gap:.75rem;}
+        .chat-input{flex:1;background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:10px;padding:.7rem 1rem;color:var(--text);font-family:'Exo 2',sans-serif;font-size:.875rem;outline:none;}
+        .chat-input:focus{border-color:rgba(0,255,136,.4);}
+        .send-btn{background:linear-gradient(135deg,var(--green),var(--blue));border:none;border-radius:10px;padding:.7rem 1.25rem;color:#000;font-weight:700;cursor:pointer;}
+
+        /* Username modal */
+        .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;z-index:200;}
+        .modal-overlay.show{display:flex;}
+        .modal{background:#111;border:1px solid rgba(0,255,136,.3);border-radius:20px;padding:2rem;width:400px;max-width:90vw;}
+        .modal h3{color:var(--green);font-family:'Orbitron',monospace;margin-bottom:1rem;}
+        .modal input{width:100%;padding:.8rem 1rem;background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:1rem;outline:none;margin-bottom:1rem;}
+        .modal-btns{display:flex;gap:.75rem;}
+        .btn{padding:.7rem 1.5rem;border:none;border-radius:10px;font-weight:700;font-size:.875rem;cursor:pointer;}
+        .btn-primary{background:linear-gradient(135deg,var(--green),var(--blue));color:#000;}
+        .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--muted);}
+
+        .empty-state{text-align:center;padding:3rem;color:var(--muted);}
+        .empty-state .icon{font-size:3rem;margin-bottom:1rem;}
+    </style>
+</head>
+<body>
+
+<header class="topbar">
+    <span class="topbar-logo">ATLAS VALLEY</span>
+    <div class="topbar-right">
+        <span class="balance-pill" id="balancePill">⬡ ... $ARKV</span>
+        <span class="wallet-pill" id="walletPill">...</span>
+        <button class="logout-btn" onclick="logout()">Esci</button>
+    </div>
+</header>
+
+<div class="layout">
+    <aside class="sidebar">
+        <div class="nav-item active" onclick="showPage('announcements',this)"><span class="icon">📢</span> Annunci</div>
+        <div class="nav-item" onclick="showPage('governance',this)"><span class="icon">🗳️</span> Governance</div>
+        <div class="nav-item" onclick="showPage('leaderboard',this)"><span class="icon">🏆</span> Leaderboard</div>
+        <div class="nav-item" onclick="showPage('exclusive',this)"><span class="icon">🔐</span> Esclusivo</div>
+        <div class="nav-item" onclick="showPage('chat',this)"><span class="icon">💬</span> Chat</div>
+        <div class="nav-item" onclick="showPage('profile',this)"><span class="icon">👤</span> Profilo</div>
+    </aside>
+
+    <main class="main">
+
+        <div class="page active" id="page-announcements">
+            <div class="page-title">📢 Annunci</div>
+            <p class="page-sub">Aggiornamenti ufficiali dal team Atlas Valley</p>
+            <div id="annList"><div class="empty-state"><div class="icon">📢</div><p>Caricamento...</p></div></div>
+        </div>
+
+        <div class="page" id="page-governance">
+            <div class="page-title">🗳️ Governance</div>
+            <p class="page-sub">Vota le proposte del progetto. 1 wallet = 1 voto. Gratis.</p>
+            <div id="propList"><div class="empty-state"><div class="icon">🗳️</div><p>Caricamento...</p></div></div>
+        </div>
+
+        <div class="page" id="page-leaderboard">
+            <div class="page-title">🏆 Leaderboard</div>
+            <p class="page-sub">Top holder di $ARKV nella community</p>
+            <div id="lbList"><div class="empty-state"><div class="icon">🏆</div><p>Caricamento...</p></div></div>
+        </div>
+
+        <div class="page" id="page-exclusive">
+            <div class="page-title">🔐 Contenuti Esclusivi</div>
+            <p class="page-sub">Riservati agli holder di $ARKV</p>
+            <div class="card"><div style="font-size:2rem;margin-bottom:.5rem">📄</div>
+                <div style="color:var(--orange);font-size:.75rem;font-weight:700;margin-bottom:.5rem">Richiesti: 1+ $ARKV</div>
+                <div style="font-weight:700;margin-bottom:.5rem">Roadmap Interna Q2-Q3 2026</div>
+                <div style="font-size:.875rem;color:#aaa">Dettagli completi sui prossimi sviluppi, partner in trattativa e obiettivi tecnici.</div>
+            </div>
+        </div>
+
+        <div class="page" id="page-chat">
+            <div class="page-title">💬 Chat Community</div>
+            <p class="page-sub">Chatta con altri holder</p>
+            <div class="chat-wrap">
+                <div class="chat-messages" id="chatMessages">
+                    <div class="msg"><div class="msg-avatar">AV</div><div>
+                        <div class="msg-author">Atlas Valley <span class="msg-time">adesso</span></div>
+                        <div class="msg-text">Benvenuto nel portal! 🚀 Chat in tempo reale in arrivo.</div>
+                    </div></div>
+                </div>
+                <div class="chat-input-row">
+                    <input class="chat-input" id="chatInput" placeholder="Scrivi un messaggio..." onkeydown="if(event.key==='Enter')sendMsg()">
+                    <button class="send-btn" onclick="sendMsg()">Invia</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="page" id="page-profile">
+            <div class="page-title">👤 Il Tuo Profilo</div>
+            <p class="page-sub">Gestisci le tue impostazioni</p>
+            <div class="card">
+                <div style="font-weight:700;color:var(--green);margin-bottom:1rem">Imposta Username</div>
+                <div style="display:flex;gap:.75rem;">
+                    <input type="text" id="usernameInput" placeholder="Scegli un username (3-30 caratteri)"
+                        style="flex:1;padding:.8rem 1rem;background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:.9rem;outline:none;">
+                    <button class="btn btn-primary" onclick="setUsername()">Salva</button>
+                </div>
+                <div id="usernameMsg" style="margin-top:.75rem;font-size:.85rem;"></div>
+            </div>
+            <div class="card">
+                <div style="font-weight:700;color:var(--green);margin-bottom:1rem">I Tuoi Voti</div>
+                <div id="myVotes"><p style="color:var(--muted);font-size:.875rem">Caricamento...</p></div>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<script>
+    let currentUser = null;
+    let myVotedProposals = new Set();
+
+    function formatBalance(n) {
+        if(n>=1e9) return (n/1e9).toFixed(2)+'B';
+        if(n>=1e6) return (n/1e6).toFixed(2)+'M';
+        if(n>=1e3) return (n/1e3).toFixed(1)+'K';
+        return n;
+    }
+    function shortWallet(w) { return w?w.slice(0,6)+'...'+w.slice(-4):'—'; }
+
+    async function logout() {
+        await fetch('/api/auth/logout',{method:'POST'});
+        window.location.href='/';
+    }
+
+    function showPage(name, el) {
+        document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+        document.getElementById(`page-${name}`).classList.add('active');
+        el.classList.add('active');
+        if(name==='announcements') loadAnnouncements();
+        if(name==='governance') loadProposals();
+        if(name==='leaderboard') loadLeaderboard();
+        if(name==='profile') loadProfile();
+    }
+
+    // Init
+    fetch('/api/auth/me').then(r=>r.json()).then(u => {
+        currentUser = u;
+        document.getElementById('balancePill').textContent = `⬡ ${formatBalance(u.arkv_balance)} $ARKV`;
+        document.getElementById('walletPill').textContent = shortWallet(u.wallet_address);
+        if(u.username) document.getElementById('usernameInput').value = u.username;
+        // Load voted proposals
+        fetch('/api/user/my-votes').then(r=>r.json()).then(votes => {
+            votes.forEach(v => myVotedProposals.add(v.proposal_id));
+        });
+    }).catch(()=>window.location.href='/');
+
+    // Annunci
+    async function loadAnnouncements() {
+        const r = await fetch('/api/user/announcements');
+        const anns = await r.json();
+        const el = document.getElementById('annList');
+        if(!anns.length) { el.innerHTML='<div class="empty-state"><div class="icon">📢</div><p>Nessun annuncio ancora</p></div>'; return; }
+        el.innerHTML = anns.map(a => `
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">${a.title}</span>
+                    ${a.pinned?'<span class="badge-pinned">📌 PIN</span>':''}
+                </div>
+                <div class="card-body">${a.content}</div>
+                <div style="margin-top:.75rem;font-size:.75rem;color:var(--muted)">Atlas Valley · ${new Date(a.created_at).toLocaleDateString('it')}</div>
+            </div>
+        `).join('');
+    }
+    loadAnnouncements();
+
+    // Proposte
+    async function loadProposals() {
+        const r = await fetch('/api/user/proposals');
+        const props = await r.json();
+        const el = document.getElementById('propList');
+        if(!props.length) { el.innerHTML='<div class="empty-state"><div class="icon">🗳️</div><p>Nessuna proposta attiva</p></div>'; return; }
+        el.innerHTML = props.map(p => {
+            const total = p.votes_yes + p.votes_no;
+            const pct = total > 0 ? Math.round((p.votes_yes/total)*100) : 0;
+            const voted = myVotedProposals.has(p.id);
+            return `
+            <div class="card">
+                <div class="card-title">${p.title}</div>
+                <div class="card-body" style="margin-top:.5rem">${p.description}</div>
+                <div class="progress-wrap"><div class="progress-bar" style="width:${pct}%"></div></div>
+                <div class="progress-labels"><span>✅ ${pct}% Sì (${p.votes_yes})</span><span>❌ ${100-pct}% No (${p.votes_no})</span></div>
+                <div class="vote-row">
+                    <button class="vote-btn vote-yes" ${voted?'disabled':''} onclick="castVote('${p.id}',true,this)">
+                        ${voted?'✅ Già votato':'✅ Vota Sì'}
+                    </button>
+                    <button class="vote-btn vote-no" ${voted?'disabled':''} onclick="castVote('${p.id}',false,this)">
+                        ${voted?'':'❌ Vota No'}
+                    </button>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    async function castVote(proposalId, choice, btn) {
+        const r = await fetch('/api/user/vote', {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({proposal_id: proposalId, choice})
+        });
+        if(r.ok) {
+            myVotedProposals.add(proposalId);
+            loadProposals();
+        } else {
+            const e = await r.json();
+            alert(e.detail);
+        }
+    }
+
+    // Leaderboard
+    async function loadLeaderboard() {
+        const r = await fetch('/api/admin/users');
+        // fallback: usa endpoint utenti ma ordinato per balance
+        if(!r.ok) { document.getElementById('lbList').innerHTML='<div class="empty-state"><p>Non disponibile</p></div>'; return; }
+        const users = await r.json();
+        const sorted = users.sort((a,b)=>b.arkv_balance-a.arkv_balance).slice(0,10);
+        const medals = ['🥇','🥈','🥉'];
+        const classes = ['gold','silver','bronze'];
+        document.getElementById('lbList').innerHTML = sorted.map((u,i) => `
+            <div class="lb-row">
+                <span class="lb-rank ${classes[i]||''}">${medals[i]||i+1}</span>
+                <span class="lb-addr">${u.username || shortWallet(u.wallet_address)}</span>
+                <span class="lb-bal">⬡ ${formatBalance(u.arkv_balance)}</span>
+            </div>
+        `).join('');
+    }
+
+    // Profile
+    async function loadProfile() {
+        const r = await fetch('/api/user/my-votes');
+        const votes = await r.json();
+        document.getElementById('myVotes').innerHTML = votes.length
+            ? votes.map(v=>`<div style="font-size:.85rem;color:#aaa;padding:.4rem 0;border-bottom:1px solid rgba(255,255,255,.05)">
+                Proposta: ${v.proposal_id.slice(0,8)}... → ${v.choice?'✅ Sì':'❌ No'}
+              </div>`).join('')
+            : '<p style="color:var(--muted);font-size:.875rem">Nessun voto ancora</p>';
+    }
+
+    async function setUsername() {
+        const username = document.getElementById('usernameInput').value.trim();
+        const msg = document.getElementById('usernameMsg');
+        const r = await fetch('/api/user/username', {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({username})
+        });
+        if(r.ok) { msg.style.color='var(--green)'; msg.textContent='✅ Username salvato!'; }
+        else { const e=await r.json(); msg.style.color='#ff6060'; msg.textContent='❌ '+e.detail; }
+    }
+
+    function sendMsg() {
+        const input = document.getElementById('chatInput');
+        const text = input.value.trim();
+        if(!text) return;
+        const msgs = document.getElementById('chatMessages');
+        const now = new Date().toLocaleTimeString('it',{hour:'2-digit',minute:'2-digit'});
+        const name = currentUser?.username || shortWallet(currentUser?.wallet_address) || 'Tu';
+        msgs.innerHTML += `<div class="msg"><div class="msg-avatar">${name.slice(0,2).toUpperCase()}</div><div>
+            <div class="msg-author">${name} <span class="msg-time">${now}</span></div>
+            <div class="msg-text">${text}</div></div></div>`;
+        input.value='';
+        msgs.scrollTop=msgs.scrollHeight;
+    }
+</script>
+
+</body>
+</html>

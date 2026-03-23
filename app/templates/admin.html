@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atlas Valley — Admin Panel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --green: #00ff88; --blue: #0066ff; --orange: #ff6b35; --red: #ff4444;
+            --bg: #080808; --surface: rgba(255,255,255,0.04); --border: rgba(0,255,136,0.15);
+            --text: #f0f0f0; --muted: #666;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { background:var(--bg); color:var(--text); font-family:'Exo 2',sans-serif; min-height:100vh; }
+
+        .topbar {
+            position:sticky; top:0; background:rgba(8,8,8,0.97); backdrop-filter:blur(20px);
+            border-bottom:1px solid rgba(255,107,53,0.3); padding:0 2rem; height:60px;
+            display:flex; align-items:center; justify-content:space-between; z-index:100;
+        }
+        .topbar-logo { font-family:'Orbitron',monospace; font-weight:900; font-size:1rem;
+            background:linear-gradient(135deg,var(--orange),var(--green));
+            -webkit-background-clip:text; -webkit-text-fill-color:transparent; letter-spacing:3px; }
+        .admin-badge { background:rgba(255,107,53,0.15); border:1px solid rgba(255,107,53,0.4);
+            color:var(--orange); padding:.3rem .8rem; border-radius:20px; font-size:.75rem; font-weight:700; }
+        .topbar-right { display:flex; align-items:center; gap:1rem; }
+        .wallet-pill { font-family:'Orbitron',monospace; font-size:.7rem; color:var(--muted); }
+        .logout-btn { background:rgba(255,60,60,0.1); border:1px solid rgba(255,60,60,0.25);
+            color:#ff6060; padding:.35rem .9rem; border-radius:8px; font-size:.8rem; cursor:pointer; }
+
+        .layout { display:grid; grid-template-columns:220px 1fr; min-height:calc(100vh - 60px); }
+        .sidebar { border-right:1px solid rgba(255,107,53,0.15); padding:1.5rem 1rem; }
+        .nav-item { display:flex; align-items:center; gap:.75rem; padding:.7rem 1rem;
+            border-radius:10px; cursor:pointer; color:var(--muted); font-size:.9rem; font-weight:600;
+            transition:all .2s; margin-bottom:.25rem; }
+        .nav-item:hover, .nav-item.active { background:rgba(255,107,53,0.08); color:var(--orange); }
+        .nav-item .icon { font-size:1rem; width:20px; text-align:center; }
+
+        .main { padding:2rem; max-width:1000px; }
+        .page { display:none; }
+        .page.active { display:block; }
+        .page-title { font-family:'Orbitron',monospace; font-size:1.3rem; font-weight:700;
+            color:var(--orange); margin-bottom:.5rem; letter-spacing:1px; }
+        .page-sub { color:var(--muted); font-size:.875rem; margin-bottom:2rem; }
+
+        /* Stats grid */
+        .stats-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; margin-bottom:2rem; }
+        .stat-card { background:var(--surface); border:1px solid var(--border); border-radius:16px;
+            padding:1.5rem; text-align:center; }
+        .stat-num { font-family:'Orbitron',monospace; font-size:2rem; font-weight:900;
+            background:linear-gradient(135deg,var(--green),var(--blue));
+            -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+        .stat-label { color:var(--muted); font-size:.8rem; margin-top:.3rem; text-transform:uppercase; letter-spacing:1px; }
+
+        /* Forms */
+        .form-card { background:var(--surface); border:1px solid rgba(255,107,53,0.2);
+            border-radius:16px; padding:1.5rem; margin-bottom:1.5rem; }
+        .form-title { font-weight:700; color:var(--orange); margin-bottom:1rem; font-size:1rem; }
+        .field { margin-bottom:1rem; }
+        .field label { display:block; font-size:.8rem; color:var(--muted); margin-bottom:.4rem; text-transform:uppercase; letter-spacing:1px; }
+        .field input, .field textarea, .field select {
+            width:100%; padding:.8rem 1rem; background:rgba(255,255,255,0.06);
+            border:1px solid rgba(255,255,255,0.1); border-radius:10px; color:var(--text);
+            font-family:'Exo 2',sans-serif; font-size:.9rem; outline:none; transition:border-color .2s; }
+        .field input:focus, .field textarea:focus { border-color:rgba(255,107,53,0.4); }
+        .field textarea { resize:vertical; min-height:100px; }
+        .checkbox-row { display:flex; align-items:center; gap:.5rem; }
+        .checkbox-row input[type=checkbox] { width:auto; }
+        .checkbox-row label { font-size:.9rem; color:var(--text); text-transform:none; letter-spacing:0; }
+
+        .btn { padding:.7rem 1.5rem; border:none; border-radius:10px; font-weight:700;
+            font-size:.875rem; cursor:pointer; transition:all .2s; display:inline-flex; align-items:center; gap:.5rem; }
+        .btn-primary { background:linear-gradient(135deg,var(--orange),var(--green)); color:#000; }
+        .btn-primary:hover { opacity:.85; transform:translateY(-1px); }
+        .btn-danger { background:rgba(255,68,68,.15); border:1px solid rgba(255,68,68,.3); color:var(--red); }
+        .btn-danger:hover { background:rgba(255,68,68,.25); }
+        .btn-success { background:rgba(0,255,136,.15); border:1px solid rgba(0,255,136,.3); color:var(--green); }
+        .btn-success:hover { background:rgba(0,255,136,.25); }
+        .btn-sm { padding:.4rem .8rem; font-size:.75rem; }
+
+        /* Tables */
+        .table-wrap { background:var(--surface); border:1px solid var(--border); border-radius:16px; overflow:hidden; }
+        table { width:100%; border-collapse:collapse; }
+        th { background:rgba(255,107,53,0.08); color:var(--orange); font-size:.75rem;
+            text-transform:uppercase; letter-spacing:1px; padding:.8rem 1rem; text-align:left; }
+        td { padding:.8rem 1rem; border-top:1px solid rgba(255,255,255,0.05);
+            font-size:.85rem; color:#ccc; }
+        tr:hover td { background:rgba(255,255,255,0.02); }
+
+        .badge { padding:.2rem .6rem; border-radius:6px; font-size:.7rem; font-weight:700; }
+        .badge-admin { background:rgba(255,107,53,.15); color:var(--orange); }
+        .badge-banned { background:rgba(255,68,68,.15); color:var(--red); }
+        .badge-active { background:rgba(0,255,136,.12); color:var(--green); }
+
+        /* Announcements list */
+        .ann-card { background:var(--surface); border:1px solid var(--border); border-radius:12px;
+            padding:1.2rem; margin-bottom:.75rem; display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; }
+        .ann-info h4 { font-size:1rem; font-weight:700; margin-bottom:.3rem; }
+        .ann-info p { font-size:.8rem; color:var(--muted); }
+        .pin-badge { background:rgba(255,107,53,.15); border:1px solid rgba(255,107,53,.3);
+            color:var(--orange); padding:.2rem .5rem; border-radius:5px; font-size:.7rem; }
+
+        /* Toast */
+        .toast { position:fixed; bottom:2rem; right:2rem; padding:1rem 1.5rem;
+            border-radius:12px; font-weight:600; font-size:.875rem; z-index:999;
+            display:none; animation:slideIn .3s ease; }
+        .toast.success { background:rgba(0,255,136,.15); border:1px solid rgba(0,255,136,.3); color:var(--green); }
+        .toast.error { background:rgba(255,68,68,.15); border:1px solid rgba(255,68,68,.3); color:var(--red); }
+        @keyframes slideIn { from { transform:translateX(100px); opacity:0; } to { transform:translateX(0); opacity:1; } }
+    </style>
+</head>
+<body>
+
+<header class="topbar">
+    <div style="display:flex;align-items:center;gap:1rem;">
+        <span class="topbar-logo">ATLAS VALLEY</span>
+        <span class="admin-badge">⚡ ADMIN PANEL</span>
+    </div>
+    <div class="topbar-right">
+        <span class="wallet-pill" id="walletPill">...</span>
+        <button class="logout-btn" onclick="logout()">Esci</button>
+    </div>
+</header>
+
+<div class="layout">
+    <aside class="sidebar">
+        <div class="nav-item active" onclick="showPage('dashboard',this)"><span class="icon">📊</span> Dashboard</div>
+        <div class="nav-item" onclick="showPage('announcements',this)"><span class="icon">📢</span> Annunci</div>
+        <div class="nav-item" onclick="showPage('governance',this)"><span class="icon">🗳️</span> Governance</div>
+        <div class="nav-item" onclick="showPage('users',this)"><span class="icon">👥</span> Utenti</div>
+        <div style="margin-top:auto;padding-top:2rem;">
+            <div class="nav-item" onclick="window.location='/portal'"><span class="icon">👤</span> Vista Utente</div>
+        </div>
+    </aside>
+
+    <main class="main">
+
+        <!-- Dashboard -->
+        <div class="page active" id="page-dashboard">
+            <div class="page-title">📊 Dashboard</div>
+            <p class="page-sub">Panoramica del Community Portal</p>
+            <div class="stats-grid">
+                <div class="stat-card"><div class="stat-num" id="statUsers">—</div><div class="stat-label">Utenti Totali</div></div>
+                <div class="stat-card"><div class="stat-num" id="statProposals">—</div><div class="stat-label">Proposte Attive</div></div>
+                <div class="stat-card"><div class="stat-num" id="statBanned">—</div><div class="stat-label">Utenti Bannati</div></div>
+            </div>
+        </div>
+
+        <!-- Annunci -->
+        <div class="page" id="page-announcements">
+            <div class="page-title">📢 Gestione Annunci</div>
+            <p class="page-sub">Crea e gestisci gli annunci visibili a tutti gli holder</p>
+
+            <div class="form-card">
+                <div class="form-title">+ Nuovo Annuncio</div>
+                <div class="field"><label>Titolo</label><input type="text" id="annTitle" placeholder="Titolo annuncio"></div>
+                <div class="field"><label>Contenuto</label><textarea id="annContent" placeholder="Scrivi il contenuto..."></textarea></div>
+                <div class="field">
+                    <div class="checkbox-row">
+                        <input type="checkbox" id="annPinned">
+                        <label for="annPinned">📌 Pinna questo annuncio in cima</label>
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="createAnnouncement()">📢 Pubblica Annuncio</button>
+            </div>
+
+            <div id="annList"></div>
+        </div>
+
+        <!-- Governance -->
+        <div class="page" id="page-governance">
+            <div class="page-title">🗳️ Gestione Governance</div>
+            <p class="page-sub">Crea proposte su cui gli holder possono votare</p>
+
+            <div class="form-card">
+                <div class="form-title">+ Nuova Proposta</div>
+                <div class="field"><label>Titolo</label><input type="text" id="propTitle" placeholder="Titolo della proposta"></div>
+                <div class="field"><label>Descrizione</label><textarea id="propDesc" placeholder="Descrivi la proposta in dettaglio..."></textarea></div>
+                <button class="btn btn-primary" onclick="createProposal()">🗳️ Crea Proposta</button>
+            </div>
+        </div>
+
+        <!-- Utenti -->
+        <div class="page" id="page-users">
+            <div class="page-title">👥 Gestione Utenti</div>
+            <p class="page-sub">Visualizza e gestisci tutti gli utenti registrati</p>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Wallet</th><th>Username</th><th>$ARKV</th><th>Stato</th><th>Ultimo accesso</th><th>Azioni</th></tr></thead>
+                    <tbody id="usersTable"></tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+    function showToast(msg, type='success') {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.className = `toast ${type}`;
+        t.style.display = 'block';
+        setTimeout(() => t.style.display = 'none', 3000);
+    }
+
+    function showPage(name, el) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        document.getElementById(`page-${name}`).classList.add('active');
+        el.classList.add('active');
+        if(name === 'dashboard') loadStats();
+        if(name === 'announcements') loadAnnouncements();
+        if(name === 'users') loadUsers();
+    }
+
+    async function logout() {
+        await fetch('/api/auth/logout', {method:'POST'});
+        window.location.href = '/';
+    }
+
+    function formatBalance(n) {
+        if(n >= 1e9) return (n/1e9).toFixed(2)+'B';
+        if(n >= 1e6) return (n/1e6).toFixed(2)+'M';
+        if(n >= 1e3) return (n/1e3).toFixed(1)+'K';
+        return n;
+    }
+
+    function shortWallet(w) { return w ? w.slice(0,6)+'...'+w.slice(-4) : '—'; }
+
+    // Load user info
+    fetch('/api/auth/me').then(r=>r.json()).then(u => {
+        document.getElementById('walletPill').textContent = shortWallet(u.wallet_address);
+    });
+
+    // Stats
+    async function loadStats() {
+        const r = await fetch('/api/admin/stats');
+        const d = await r.json();
+        document.getElementById('statUsers').textContent = d.total_users;
+        document.getElementById('statProposals').textContent = d.total_proposals;
+        document.getElementById('statBanned').textContent = d.banned_users;
+    }
+    loadStats();
+
+    // Annunci
+    async function loadAnnouncements() {
+        const r = await fetch('/api/admin/announcements');
+        const anns = await r.json();
+        document.getElementById('annList').innerHTML = anns.map(a => `
+            <div class="ann-card">
+                <div class="ann-info">
+                    <h4>${a.title} ${a.pinned ? '<span class="pin-badge">📌 PIN</span>' : ''}</h4>
+                    <p>${a.content.substring(0,100)}${a.content.length>100?'...':''}</p>
+                    <p style="margin-top:.3rem;font-size:.75rem;color:var(--muted)">${a.created_at}</p>
+                </div>
+                <button class="btn btn-danger btn-sm" onclick="deleteAnn('${a.id}')">🗑️ Elimina</button>
+            </div>
+        `).join('') || '<p style="color:var(--muted);padding:1rem">Nessun annuncio</p>';
+    }
+
+    async function createAnnouncement() {
+        const title = document.getElementById('annTitle').value.trim();
+        const content = document.getElementById('annContent').value.trim();
+        const pinned = document.getElementById('annPinned').checked;
+        if(!title || !content) { showToast('Compila tutti i campi', 'error'); return; }
+        const r = await fetch('/api/admin/announcements', {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({title, content, pinned})
+        });
+        if(r.ok) {
+            showToast('✅ Annuncio pubblicato!');
+            document.getElementById('annTitle').value = '';
+            document.getElementById('annContent').value = '';
+            document.getElementById('annPinned').checked = false;
+            loadAnnouncements();
+        } else { showToast('Errore nella pubblicazione', 'error'); }
+    }
+
+    async function deleteAnn(id) {
+        if(!confirm('Eliminare questo annuncio?')) return;
+        const r = await fetch(`/api/admin/announcements/${id}`, {method:'DELETE'});
+        if(r.ok) { showToast('✅ Annuncio eliminato'); loadAnnouncements(); }
+    }
+
+    // Proposte
+    async function createProposal() {
+        const title = document.getElementById('propTitle').value.trim();
+        const description = document.getElementById('propDesc').value.trim();
+        if(!title || !description) { showToast('Compila tutti i campi', 'error'); return; }
+        const r = await fetch('/api/admin/proposals', {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({title, description})
+        });
+        if(r.ok) {
+            showToast('✅ Proposta creata!');
+            document.getElementById('propTitle').value = '';
+            document.getElementById('propDesc').value = '';
+        } else { showToast('Errore nella creazione', 'error'); }
+    }
+
+    // Utenti
+    async function loadUsers() {
+        const r = await fetch('/api/admin/users');
+        const users = await r.json();
+        document.getElementById('usersTable').innerHTML = users.map(u => `
+            <tr>
+                <td style="font-family:monospace;font-size:.75rem">${shortWallet(u.wallet_address)}</td>
+                <td>${u.username || '<span style="color:var(--muted)">—</span>'}</td>
+                <td style="color:var(--green)">⬡ ${formatBalance(u.arkv_balance)}</td>
+                <td>
+                    ${u.is_admin ? '<span class="badge badge-admin">Admin</span>' : ''}
+                    ${u.is_banned ? '<span class="badge badge-banned">Bannato</span>' : '<span class="badge badge-active">Attivo</span>'}
+                </td>
+                <td style="color:var(--muted);font-size:.75rem">${u.last_seen ? u.last_seen.substring(0,16) : '—'}</td>
+                <td>
+                    ${!u.is_admin ? (u.is_banned
+                        ? `<button class="btn btn-success btn-sm" onclick="unbanUser('${u.id}')">✅ Unban</button>`
+                        : `<button class="btn btn-danger btn-sm" onclick="banUser('${u.id}')">🚫 Ban</button>`
+                    ) : '<span style="color:var(--muted);font-size:.75rem">—</span>'}
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    async function banUser(id) {
+        if(!confirm('Bannare questo utente?')) return;
+        const r = await fetch(`/api/admin/users/${id}/ban`, {method:'POST'});
+        if(r.ok) { showToast('✅ Utente bannato'); loadUsers(); }
+        else { const e = await r.json(); showToast(e.detail, 'error'); }
+    }
+
+    async function unbanUser(id) {
+        const r = await fetch(`/api/admin/users/${id}/unban`, {method:'POST'});
+        if(r.ok) { showToast('✅ Utente unbannato'); loadUsers(); }
+    }
+</script>
+
+</body>
+</html>
